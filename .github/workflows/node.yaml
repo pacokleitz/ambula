@@ -8,6 +8,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  security-events: write
 
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/ambula:test

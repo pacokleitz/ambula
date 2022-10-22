@@ -1,10 +1,10 @@
 name: node
 on:
   push:
-  # tags:
-  #   - v*
-  # branches:
-  #   - master
+    tags:
+      - v*
+    branches:
+      - master
   pull_request:
 permissions:
   contents: read

@@ -100,7 +100,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Build and push
-        # if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v3
         with:
           push: true

@@ -7,12 +7,14 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - 'master'
+
 permissions:
   contents: read
 
 env:
-  TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/ambula:test
-  LATEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/ambula:latest
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/ambula
 
 jobs:
   lint:
@@ -77,6 +79,12 @@ jobs:
         with:
           dockerfile: "Dockerfile"
 
+      - name: Docker tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -85,6 +93,7 @@ jobs:
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
+        if: github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -94,12 +103,12 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ env.TEST_TAG }}
+          tags: ${{ env.IMAGE_NAME }}:test
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.TEST_TAG }}
+          image-ref: ${{ env.IMAGE_NAME }}:test
           format: "table"
           ignore-unfixed: true
           exit-code: "1"
@@ -110,4 +119,5 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ env.LATEST_TAG }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

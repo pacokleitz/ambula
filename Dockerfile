@@ -14,7 +14,7 @@ COPY *.go ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./ambula
 
 # Deploy
-FROM alpine:latest AS production
+FROM alpine:3 AS production
 
 WORKDIR /app
 

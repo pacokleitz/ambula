@@ -1,4 +1,5 @@
-name: node
+name: Build node docker image
+
 on:
   push:
     tags:

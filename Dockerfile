@@ -20,9 +20,9 @@ WORKDIR /app
 
 COPY --from=build /app/ambula ./ambula
 
-EXPOSE 8080
+EXPOSE 1984
 
-RUN adduser --disabled-password nonroot
-USER nonroot
+RUN adduser --disabled-password satoshi
+USER satoshi
 
 ENTRYPOINT ["./ambula"]

@@ -13,7 +13,7 @@ repos:
             "--branch",
             "master",
             "--pattern",
-            "(?!^[a-z]{3}/(feat|fix|test|junk|refactor|test|perf|style|docs|ci|chore|build)/([0-9]{1,5}|x)/([a-z]+(-[a-zA-Z]+)*)$)",
+            "(?!^[a-z]{2}/(feat|fix|test|junk|refactor|test|perf|style|docs|ci|chore|build)/([0-9]{1,5}|x)/([a-z]+(-[a-zA-Z]+)*)$)",
           ]
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v9.1.0

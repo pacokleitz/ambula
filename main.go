@@ -3,31 +3,44 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"time"
+
+	"github.com/pacokleitz/ambula/network"
 )
 
-const READ_TIMEOUT = 5
-const WRITE_TIMEOUT = 10
-
-func Hello(name string) string {
-	return "Hello, " + name
-}
-
-func getHello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, Hello("ambula"))
-}
-
 func main() {
-	http.HandleFunc("/", getHello)
+	localAddr := network.NetAddr{Addr: "A", Net: "local"}
+	remoteAddr := network.NetAddr{Addr: "B", Net: "local"}
 
-	srv := &http.Server{
-		Addr:         ":1984",
-		ReadTimeout:  READ_TIMEOUT * time.Second,
-		WriteTimeout: WRITE_TIMEOUT * time.Second,
+	trLocal := network.NewLocalTransport(localAddr)
+	trRemote := network.NewLocalTransport(remoteAddr)
+
+	if err := trLocal.Connect(trRemote); err != nil {
+		log.Fatal(err)
 	}
 
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal("ListenAndServe: ", err)
+	if err := trRemote.Connect(trLocal); err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		i := 0
+		for {
+			msg := fmt.Sprintf("hello ambula %d", i)
+			if err := trRemote.SendMessage(trLocal.Addr(), []byte(msg)); err != nil {
+				log.Fatal(err)
+			}
+			i += 1
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	opts := network.ServerOpts{
+		Transports: []network.Transport{trLocal},
+	}
+
+	s := network.NewServer(opts)
+	if err := s.Start(); err != nil {
+		log.Fatal(err)
 	}
 }

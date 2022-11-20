@@ -1,7 +1,7 @@
 # ambula
 
-This project aims to implement a minimal blockchain running an alternative puzzle algorithm to Bitcoin Proof of Work (PoW) called [Proof of Interaction (PoI)](https://hal.archives-ouvertes.fr/hal-02479891v2/document).  
-This new puzzle does not consume nearly as much energy as PoW as it is based on network communication delay instead of raw compute.  
+This project aims to implement a minimalist blockchain running an alternative puzzle algorithm to Bitcoin Proof of Work (PoW) called [Proof of Interaction (PoI)](https://hal.archives-ouvertes.fr/hal-02479891v2/document).  
+This new puzzle does not consume nearly as much energy as PoW as it is based on network communication delay instead of raw compute. This is the first implementation of the method.  
 
 ### Usage
 
@@ -20,7 +20,7 @@ task: Available tasks for this project:
 * test:         Run all the go tests.
 ```
 
-You will need to install [golangci-lint](https://golangci-lint.run/usage/install/) cli for the lint task.  
+The ambula node is written in [Go](https://go.dev/). You will need to install [golangci-lint](https://golangci-lint.run/usage/install/) cli for the lint task.  
 You can look at the `Taskfile.yaml` file and the [Task documentation](https://taskfile.dev/usage/) for more infos about tasks.  
 
 ## Contribute

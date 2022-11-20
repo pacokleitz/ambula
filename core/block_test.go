@@ -18,6 +18,23 @@ func TestSignBlock(t *testing.T) {
 	assert.NotNil(t, b.Signature)
 }
 
+func TestTxAdd(t *testing.T) {
+	privKey := crypto.GeneratePrivateKey()
+
+	b := randomBlock(t, 0, types.Hash{})
+
+	singleTx := randomTxWithSignature(t)
+	b.AddTx(singleTx)
+	assert.Equal(t, b.Transactions, []*Transaction{singleTx})
+
+	multipleTx := []*Transaction{randomTxWithSignature(t), randomTxWithSignature(t)}
+	b.AddTxx(multipleTx)
+	assert.Equal(t, b.Transactions, append([]*Transaction{singleTx}, multipleTx...))
+
+	assert.Nil(t, b.Sign(privKey))
+	assert.Nil(t, b.Verify())
+}
+
 func TestVerifyBlock(t *testing.T) {
 	privKey := crypto.GeneratePrivateKey()
 	b := randomBlock(t, 0, types.Hash{})
@@ -61,7 +78,6 @@ func TestDecodeEncodeBlock(t *testing.T) {
 
 func randomBlock(t *testing.T, height uint32, prevBlockHash types.Hash) *Block {
 	privKey := crypto.GeneratePrivateKey()
-	tx := randomTxWithSignature(t)
 	header := &Header{
 		Version:       1,
 		PrevBlockHash: prevBlockHash,
@@ -69,7 +85,7 @@ func randomBlock(t *testing.T, height uint32, prevBlockHash types.Hash) *Block {
 		Timestamp:     time.Now().UnixNano(),
 	}
 
-	b, err := NewBlock(header, []*Transaction{tx})
+	b, err := NewBlock(header, []*Transaction{})
 	assert.Nil(t, err)
 	dataHash, err := ComputeDataHash(b.Transactions)
 	assert.Nil(t, err)

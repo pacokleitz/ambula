@@ -27,5 +27,11 @@ You can look at the `Taskfile.yaml` file and the [Task documentation](https://ta
 
 Look at our [coding conventions](https://github.com/pacokleitz/ambula/wiki/Coding-conventions) and how to [install our git pre-hooks](https://github.com/pacokleitz/ambula/wiki/Pre-hooks) to ensure you conform to it. 
 
+## Paper
+
+Jean-Philippe Abegg, Quentin Bramas, Thomas Noel. Blockchain using Proof-of-Interaction. 2021. ⟨[hal-02479891v2](https://hal.archives-ouvertes.fr/hal-02479891v2/document)⟩
+
 ## Mentions
-https://github.com/dogecoin/dogecoin/issues/2059
+
+https://github.com/dogecoin/dogecoin/issues/2059   
+

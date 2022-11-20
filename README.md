@@ -1,4 +1,5 @@
-# ambula
+![Ambula-Logo-Large](https://user-images.githubusercontent.com/31453761/202922257-fdd9f598-9658-4715-bde7-4c3ecd3d0f8f.svg)
+
 
 This project aims to implement a minimalist blockchain running an alternative puzzle algorithm to Bitcoin Proof of Work (PoW) called [Proof of Interaction (PoI)](https://hal.archives-ouvertes.fr/hal-02479891v2/document).  
 This new puzzle does not consume nearly as much energy as PoW as it is based on network communication delay instead of raw compute. This is the first implementation of the method.  

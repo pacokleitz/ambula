@@ -29,10 +29,6 @@ func (TxHasher) Hash(tx *Transaction) types.Hash {
 		panic(err)
 	}
 
-	if err := binary.Write(buf, binary.LittleEndian, tx.Data); err != nil {
-		panic(err)
-	}
-
 	if err := binary.Write(buf, binary.LittleEndian, tx.To); err != nil {
 		panic(err)
 	}

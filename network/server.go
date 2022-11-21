@@ -40,15 +40,14 @@ free:
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%s sent \"%s\"\n", rpc.From.String(), buf.String())
+			fmt.Printf("Peer [%s] sent [%s]\n", rpc.From.String(), buf.String())
 		case <-s.quitCh:
 			break free
 		case <-ticker.C:
-			fmt.Printf("do stuff every %d seconds\n", TICK_DURATION)
+			fmt.Println("still running...")
 		}
 	}
 
-	fmt.Println("Server shutdown")
 	return nil
 }
 

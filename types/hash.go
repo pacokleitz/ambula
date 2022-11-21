@@ -18,7 +18,7 @@ func (h Hash) IsZero() bool {
 	return true
 }
 
-func (h Hash) ToSlice() []byte {
+func (h Hash) ToBytes() []byte {
 	b := make([]byte, HASH_BYTE_SIZE)
 	for i := 0; i < HASH_BYTE_SIZE; i++ {
 		b[i] = h[i]
@@ -27,28 +27,27 @@ func (h Hash) ToSlice() []byte {
 }
 
 func (h Hash) String() string {
-	return hex.EncodeToString(h.ToSlice())
+	return hex.EncodeToString(h.ToBytes())
 }
 
-func HashFromString(hstr string) Hash {
+func HashFromString(hstr string) (Hash, error) {
 	hbyt, err := hex.DecodeString(hstr)
 	if err != nil {
-		panic(err)
+		return Hash{}, err
 	}
 
 	return HashFromBytes(hbyt)
 }
 
-func HashFromBytes(b []byte) Hash {
+func HashFromBytes(b []byte) (Hash, error) {
 	if len(b) != HASH_BYTE_SIZE {
-		msg := fmt.Sprintf("given bytes with length %d should be %d", len(b), HASH_BYTE_SIZE)
-		panic(msg)
+		return Hash{}, fmt.Errorf("Byte slice length %d should match hash length %d", len(b), HASH_BYTE_SIZE)
 	}
 
-	var value [HASH_BYTE_SIZE]uint8
+	var uints [HASH_BYTE_SIZE]uint8
 	for i := 0; i < HASH_BYTE_SIZE; i++ {
-		value[i] = b[i]
+		uints[i] = b[i]
 	}
 
-	return Hash(value)
+	return Hash(uints), nil
 }

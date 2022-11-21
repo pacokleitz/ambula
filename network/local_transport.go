@@ -7,67 +7,67 @@ import (
 	"sync"
 )
 
-const CONSUME_CHAN_SIZE = 1024
+const RPC_CHAN_SIZE = 1024
 
 type LocalTransport struct {
-	addr      net.Addr
-	peers     map[net.Addr]*LocalTransport
-	consumeCh chan RPC
-	lock      sync.RWMutex
+	addr  net.Addr
+	peers map[net.Addr]*LocalTransport
+	rpcCh chan RPC
+	lock  sync.RWMutex
 }
 
 func NewLocalTransport(addr net.Addr) *LocalTransport {
 	return &LocalTransport{
-		addr:      addr,
-		peers:     make(map[net.Addr]*LocalTransport),
-		consumeCh: make(chan RPC, CONSUME_CHAN_SIZE),
+		addr:  addr,
+		peers: make(map[net.Addr]*LocalTransport),
+		rpcCh: make(chan RPC, RPC_CHAN_SIZE),
 	}
 }
 
-func (t *LocalTransport) Consume() <-chan RPC {
-	return t.consumeCh
+func (tr *LocalTransport) Consume() <-chan RPC {
+	return tr.rpcCh
 }
 
-func (t *LocalTransport) Connect(tr Transport) error {
-	ltr := tr.(*LocalTransport)
-	t.lock.Lock()
-	defer t.lock.Unlock()
+func (tr *LocalTransport) Connect(peerTr Transport) error {
+	localPeerTr := peerTr.(*LocalTransport)
+	tr.lock.Lock()
+	defer tr.lock.Unlock()
 
-	t.peers[tr.Addr()] = ltr
+	tr.peers[peerTr.Addr()] = localPeerTr
 
 	return nil
 }
 
-func (t *LocalTransport) SendMessage(to net.Addr, payload []byte) error {
-	t.lock.RLock()
-	defer t.lock.RUnlock()
+func (tr *LocalTransport) SendMessage(to net.Addr, payload []byte) error {
+	tr.lock.RLock()
+	defer tr.lock.RUnlock()
 
-	if t.addr == to {
+	if tr.addr == to {
 		return nil
 	}
 
-	peer, ok := t.peers[to]
+	peerTr, ok := tr.peers[to]
 	if !ok {
-		return fmt.Errorf("%s: could not send message to unknown peer %s", t.addr, to)
+		return fmt.Errorf("Transport %s on %s network could not find peer %s.", tr.Addr().String(), tr.Addr().Network(), to)
 	}
 
-	peer.consumeCh <- RPC{
-		From:    t.addr,
+	peerTr.rpcCh <- RPC{
+		From:    tr.addr,
 		Payload: bytes.NewReader(payload),
 	}
 
 	return nil
 }
 
-func (t *LocalTransport) Broadcast(payload []byte) error {
-	for _, peer := range t.peers {
-		if err := t.SendMessage(peer.Addr(), payload); err != nil {
+func (tr *LocalTransport) Broadcast(payload []byte) error {
+	for _, peer := range tr.peers {
+		if err := tr.SendMessage(peer.Addr(), payload); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (t *LocalTransport) Addr() net.Addr {
-	return t.addr
+func (tr *LocalTransport) Addr() net.Addr {
+	return tr.addr
 }

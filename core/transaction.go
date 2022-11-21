@@ -1,14 +1,17 @@
 package core
 
 import (
+	"errors"
 	"fmt"
-	// "math/rand"
-	"crypto/rand"
 	"math"
-	"math/big"
 
 	"github.com/pacokleitz/ambula/crypto"
+	"github.com/pacokleitz/ambula/random"
 	"github.com/pacokleitz/ambula/types"
+)
+
+var (
+	TxMissingSignature = errors.New("The verified transaction has no signature.")
 )
 
 type Transaction struct {
@@ -19,24 +22,21 @@ type Transaction struct {
 	Signature *crypto.Signature
 	Nonce     int64
 
-	// cached version of the tx data hash
 	hash types.Hash
 }
 
-func NewTransaction(data []byte) *Transaction {
-	maxNonce, err := rand.Int(rand.Reader, big.NewInt(int64(math.MaxInt64)))
-	if err != nil {
-		panic(err)
-	}
-
-	nonce, err := rand.Int(rand.Reader, maxNonce)
+func NewTransaction(data []byte, to crypto.PublicKey, value uint64) *Transaction {
+	// Temporary until possible to query existing nonces
+	nonce, err := random.RandomInt(math.MaxInt64)
 	if err != nil {
 		panic(err)
 	}
 
 	return &Transaction{
+		To:    to,
+		Value: value,
 		Data:  data,
-		Nonce: nonce.Int64(),
+		Nonce: nonce,
 	}
 }
 
@@ -47,9 +47,13 @@ func (tx *Transaction) Hash(hasher Hasher[*Transaction]) types.Hash {
 	return tx.hash
 }
 
+func (tx *Transaction) InvalidateHash() {
+	tx.hash = types.Hash{}
+}
+
 func (tx *Transaction) Sign(privKey crypto.PrivateKey) error {
 	hash := tx.Hash(TxHasher{})
-	sig, err := privKey.Sign(hash.ToSlice())
+	sig, err := privKey.Sign(hash.ToBytes())
 	if err != nil {
 		return err
 	}
@@ -62,12 +66,12 @@ func (tx *Transaction) Sign(privKey crypto.PrivateKey) error {
 
 func (tx *Transaction) Verify() error {
 	if tx.Signature == nil {
-		return fmt.Errorf("transaction has no signature")
+		return TxMissingSignature
 	}
 
 	hash := tx.Hash(TxHasher{})
-	if !tx.Signature.Verify(tx.From, hash.ToSlice()) {
-		return fmt.Errorf("invalid transaction signature")
+	if !tx.Signature.Verify(tx.From, hash.ToBytes()) {
+		return fmt.Errorf("Tx [%s] signature verification failed.", hash.String())
 	}
 
 	return nil

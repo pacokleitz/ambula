@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,10 @@ import (
 
 	"github.com/pacokleitz/ambula/crypto"
 	"github.com/pacokleitz/ambula/types"
+)
+
+var (
+	BlockMissingSignature = errors.New("The verified block has no signature.")
 )
 
 const PROTOCOL_VERSION = 1
@@ -34,7 +39,6 @@ func (h *Header) Bytes() []byte {
 
 type Block struct {
 	*Header
-
 	Transactions []*Transaction
 	Validator    crypto.PublicKey
 	Signature    *crypto.Signature
@@ -66,23 +70,33 @@ func NewBlockFromPrevHeader(prevHeader *Header, txx []*Transaction) (*Block, err
 	return NewBlock(header, txx)
 }
 
-func (b *Block) AddTx(tx *Transaction) {
+func (b *Block) AddTx(tx *Transaction) error {
 	b.Transactions = append(b.Transactions, tx)
-	hash, _ := ComputeDataHash(b.Transactions)
+	hash, err := ComputeDataHash(b.Transactions)
+	if err != nil {
+		return err
+	}
+
 	b.DataHash = hash
 	b.InvalidateHeaderHash()
+	return nil
 }
 
-func (b *Block) AddTxx(txx []*Transaction) {
+func (b *Block) AddTxx(txx []*Transaction) error {
 	b.Transactions = append(b.Transactions, txx...)
-	hash, _ := ComputeDataHash(b.Transactions)
+	hash, err := ComputeDataHash(b.Transactions)
+	if err != nil {
+		return err
+	}
+
 	b.DataHash = hash
 	b.InvalidateHeaderHash()
+	return nil
 }
 
 func (b *Block) Sign(privKey crypto.PrivateKey) error {
 	headerHash := b.HeaderHash(BlockHasher{})
-	sig, err := privKey.Sign(headerHash.ToSlice())
+	sig, err := privKey.Sign(headerHash.ToBytes())
 	if err != nil {
 		return err
 	}
@@ -95,13 +109,13 @@ func (b *Block) Sign(privKey crypto.PrivateKey) error {
 
 func (b *Block) Verify() error {
 	if b.Signature == nil {
-		return fmt.Errorf("block has no signature")
+		return BlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
-	if !b.Signature.Verify(b.Validator, headerHash.ToSlice()) {
-		return fmt.Errorf("block has invalid signature")
+	if !b.Signature.Verify(b.Validator, headerHash.ToBytes()) {
+		return fmt.Errorf("Block [%s] header signature verification failed.", headerHash.String())
 	}
 
 	for _, tx := range b.Transactions {
@@ -116,7 +130,7 @@ func (b *Block) Verify() error {
 	}
 
 	if computedDataHash != b.DataHash {
-		return fmt.Errorf("block (%s) has an invalid data hash", b.HeaderHash(BlockHasher{}))
+		return fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
 	}
 
 	return nil

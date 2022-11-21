@@ -10,25 +10,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSignBlock(t *testing.T) {
-	privKey := crypto.GeneratePrivateKey()
+func TestBlockSIgn(t *testing.T) {
+	privKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
 	b := randomBlock(t, 0, types.Hash{})
 
 	assert.Nil(t, b.Sign(privKey))
 	assert.NotNil(t, b.Signature)
 }
 
-func TestTxAdd(t *testing.T) {
-	privKey := crypto.GeneratePrivateKey()
+func TestBlockAddTx(t *testing.T) {
+	privKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
 
 	b := randomBlock(t, 0, types.Hash{})
 
-	singleTx := randomTxWithSignature(t)
-	b.AddTx(singleTx)
+	singleTx := genTxWithSignature(t)
+	assert.Nil(t, b.AddTx(singleTx))
 	assert.Equal(t, b.Transactions, []*Transaction{singleTx})
 
-	multipleTx := []*Transaction{randomTxWithSignature(t), randomTxWithSignature(t)}
-	b.AddTxx(multipleTx)
+	multipleTx := []*Transaction{genTxWithSignature(t), genTxWithSignature(t)}
+	assert.Nil(t, b.AddTxx(multipleTx))
 	assert.Equal(t, b.Transactions, append([]*Transaction{singleTx}, multipleTx...))
 
 	assert.Nil(t, b.Sign(privKey))
@@ -36,7 +39,9 @@ func TestTxAdd(t *testing.T) {
 }
 
 func TestVerifyBlock(t *testing.T) {
-	privKey := crypto.GeneratePrivateKey()
+	privKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
 	b := randomBlock(t, 0, types.Hash{})
 
 	// Sign and verify the block
@@ -44,7 +49,7 @@ func TestVerifyBlock(t *testing.T) {
 	assert.Nil(t, b.Verify())
 
 	// Add a new tx to the block to invalidate signature
-	b.AddTx(randomTxWithSignature(t))
+	assert.Nil(t, b.AddTx(genTxWithSignature(t)))
 	assert.NotNil(t, b.Verify())
 
 	// Refresh the signature to match content of the block
@@ -52,32 +57,36 @@ func TestVerifyBlock(t *testing.T) {
 	assert.Nil(t, b.Verify())
 
 	// Switch the Validator of the block and try to verify signature
-	otherPrivKey := crypto.GeneratePrivateKey()
+	otherPrivKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
 	b.Validator = otherPrivKey.PublicKey()
 	assert.NotNil(t, b.Verify())
 }
 
 func TestDecodeEncodeBlock(t *testing.T) {
 	b := randomBlock(t, 1, types.Hash{})
-	buf := &bytes.Buffer{}
-	assert.Nil(t, b.Encode(NewGobBlockEncoder(buf)))
 
-	bDecode := new(Block)
-	assert.Nil(t, bDecode.Decode(NewGobBlockDecoder(buf)))
+	blockEncoded := &bytes.Buffer{}
+	assert.Nil(t, b.Encode(NewGobBlockEncoder(blockEncoded)))
 
-	assert.Equal(t, b.Header, bDecode.Header)
+	blockDecoded := new(Block)
+	assert.Nil(t, blockDecoded.Decode(NewGobBlockDecoder(blockEncoded)))
+
+	assert.Equal(t, b.Header, blockDecoded.Header)
 
 	for i := 0; i < len(b.Transactions); i++ {
 		b.Transactions[i].hash = types.Hash{}
-		assert.Equal(t, b.Transactions[i], bDecode.Transactions[i])
+		assert.Equal(t, b.Transactions[i], blockDecoded.Transactions[i])
 	}
 
-	assert.Equal(t, b.Validator, bDecode.Validator)
-	assert.Equal(t, b.Signature, bDecode.Signature)
+	assert.Equal(t, b.Validator, blockDecoded.Validator)
+	assert.Equal(t, b.Signature, blockDecoded.Signature)
 }
 
 func randomBlock(t *testing.T, height uint32, prevBlockHash types.Hash) *Block {
-	privKey := crypto.GeneratePrivateKey()
+	privKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
 	header := &Header{
 		Version:       1,
 		PrevBlockHash: prevBlockHash,
@@ -87,8 +96,10 @@ func randomBlock(t *testing.T, height uint32, prevBlockHash types.Hash) *Block {
 
 	b, err := NewBlock(header, []*Transaction{})
 	assert.Nil(t, err)
+
 	dataHash, err := ComputeDataHash(b.Transactions)
 	assert.Nil(t, err)
+
 	b.Header.DataHash = dataHash
 	assert.Nil(t, b.Sign(privKey))
 

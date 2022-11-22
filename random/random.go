@@ -1,3 +1,5 @@
+// Package random implements utility routines for generating
+// cryptographically secure random values.
 package random
 
 import (
@@ -10,8 +12,9 @@ var (
 	InvalidUpperBound = errors.New("The RandomInt upper bound should be > 0.")
 )
 
+// RandomInt returns a random Int64 between [0, upperBound).
 func RandomInt(upperBound int64) (int64, error) {
-	if upperBound <= 0 {
+	if upperBound < 0 {
 		return 0, InvalidUpperBound
 	}
 

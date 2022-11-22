@@ -35,11 +35,11 @@ func main() {
 		}
 	}()
 
-	opts := network.ServerOpts{
+	opts := network.NodeOpts{
 		Transports: []network.Transport{trLocal},
 	}
 
-	s := network.NewServer(opts)
+	s := network.NewNode(opts)
 	if err := s.Start(); err != nil {
 		log.Fatal(err)
 	}

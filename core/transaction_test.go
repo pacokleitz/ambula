@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/pacokleitz/ambula/crypto"
-	"github.com/pacokleitz/ambula/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +43,7 @@ func TestTxEncodeDecode(t *testing.T) {
 	tx := genTxWithSignature(t)
 
 	// Hash is a private field and can't be accessed by encoder so we ignore it
-	tx.hash = types.Hash{}
+	tx.hash = crypto.Hash{}
 
 	txEncoded := &bytes.Buffer{}
 	assert.Nil(t, tx.Encode(NewGobTxEncoder(txEncoded)))

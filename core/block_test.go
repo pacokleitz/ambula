@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"github.com/pacokleitz/ambula/crypto"
-	"github.com/pacokleitz/ambula/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBlockSIgn(t *testing.T) {
+func TestBlockSign(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, types.Hash{})
+	b := randomBlock(t, 0, crypto.Hash{})
 
 	assert.Nil(t, b.Sign(privKey))
 	assert.NotNil(t, b.Signature)
@@ -24,7 +23,7 @@ func TestBlockAddTx(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, types.Hash{})
+	b := randomBlock(t, 0, crypto.Hash{})
 
 	singleTx := genTxWithSignature(t)
 	assert.Nil(t, b.AddTx(singleTx))
@@ -42,7 +41,7 @@ func TestVerifyBlock(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, types.Hash{})
+	b := randomBlock(t, 0, crypto.Hash{})
 
 	// Sign and verify the block
 	assert.Nil(t, b.Sign(privKey))
@@ -64,7 +63,9 @@ func TestVerifyBlock(t *testing.T) {
 }
 
 func TestDecodeEncodeBlock(t *testing.T) {
-	b := randomBlock(t, 1, types.Hash{})
+	b := randomBlock(t, 1, crypto.Hash{})
+	multipleTx := []*Transaction{genTxWithSignature(t), genTxWithSignature(t)}
+	assert.Nil(t, b.AddTxx(multipleTx))
 
 	blockEncoded := &bytes.Buffer{}
 	assert.Nil(t, b.Encode(NewGobBlockEncoder(blockEncoded)))
@@ -75,7 +76,7 @@ func TestDecodeEncodeBlock(t *testing.T) {
 	assert.Equal(t, b.Header, blockDecoded.Header)
 
 	for i := 0; i < len(b.Transactions); i++ {
-		b.Transactions[i].hash = types.Hash{}
+		b.Transactions[i].hash = crypto.Hash{}
 		assert.Equal(t, b.Transactions[i], blockDecoded.Transactions[i])
 	}
 
@@ -83,7 +84,7 @@ func TestDecodeEncodeBlock(t *testing.T) {
 	assert.Equal(t, b.Signature, blockDecoded.Signature)
 }
 
-func randomBlock(t *testing.T, height uint32, prevBlockHash types.Hash) *Block {
+func randomBlock(t *testing.T, height uint32, prevBlockHash crypto.Hash) *Block {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 

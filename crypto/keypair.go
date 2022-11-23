@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"io"
 	"math/big"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 // A PrivateKey is used for signing objects.
@@ -55,6 +57,12 @@ type PublicKey []byte
 // String returns a hexadecimal string encoding of the PublicKey.
 func (k PublicKey) String() string {
 	return hex.EncodeToString(k)
+}
+
+// Address returns the Public Address corresponding to the PublicKey
+func (k PublicKey) Address() Address {
+	h := Hash(blake2b.Sum256(k))
+	return Address(h)
 }
 
 // A Signature is used to prove that some data was signed by a PrivateKey.

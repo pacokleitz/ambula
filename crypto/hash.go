@@ -22,8 +22,8 @@ func (h Hash) IsZero() bool {
 	return true
 }
 
-// ToBytes returns the byte slice representation of the Hash.
-func (h Hash) ToBytes() []byte {
+// Bytes returns the byte slice representation of the Hash.
+func (h Hash) Bytes() []byte {
 	b := make([]byte, HASH_BYTE_SIZE)
 	for i := 0; i < HASH_BYTE_SIZE; i++ {
 		b[i] = h[i]
@@ -33,10 +33,10 @@ func (h Hash) ToBytes() []byte {
 
 // String returns the hexadecimal string representation of the Hash.
 func (h Hash) String() string {
-	return hex.EncodeToString(h.ToBytes())
+	return hex.EncodeToString(h.Bytes())
 }
 
-// HashFromString returns a Hash from a (HASH_BYTE_SIZE * 8) bits hexadecimal hash string.
+// HashFromString returns a Hash given a (HASH_BYTE_SIZE * 8) bits hexadecimal hash string.
 func HashFromString(hstr string) (Hash, error) {
 	hbyt, err := hex.DecodeString(hstr)
 	if err != nil {
@@ -46,7 +46,7 @@ func HashFromString(hstr string) (Hash, error) {
 	return HashFromBytes(hbyt)
 }
 
-// HashFromBytes returns a Hash from a HASH_BYTE_SIZE byte slice.
+// HashFromBytes returns a Hash given a HASH_BYTE_SIZE byte slice.
 func HashFromBytes(b []byte) (Hash, error) {
 	if len(b) != HASH_BYTE_SIZE {
 		return Hash{}, fmt.Errorf("Byte slice length %d should match hash length %d", len(b), HASH_BYTE_SIZE)

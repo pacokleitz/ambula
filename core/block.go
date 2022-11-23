@@ -107,7 +107,7 @@ func (b *Block) AddTxx(txx []*Transaction) error {
 // Sign computes the signature of the HeaderHash which certifies the content of the Block.
 func (b *Block) Sign(privKey crypto.PrivateKey) error {
 	headerHash := b.HeaderHash(BlockHasher{})
-	sig, err := privKey.Sign(headerHash.ToBytes())
+	sig, err := privKey.Sign(headerHash.Bytes())
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (b *Block) Verify() error {
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
-	if !b.Signature.Verify(b.Validator, headerHash.ToBytes()) {
+	if !b.Signature.Verify(b.Validator, headerHash.Bytes()) {
 		return fmt.Errorf("Block [%s] header signature verification failed.", headerHash.String())
 	}
 

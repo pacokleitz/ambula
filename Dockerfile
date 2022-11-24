@@ -1,5 +1,3 @@
-## Node two stage image building
-
 # Build
 FROM golang:1.19 AS build
 
@@ -9,7 +7,7 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY . ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./ambula
 
@@ -20,9 +18,9 @@ WORKDIR /app
 
 COPY --from=build /app/ambula ./ambula
 
-EXPOSE 1984
-
 RUN adduser --disabled-password satoshi
 USER satoshi
+
+EXPOSE 1984
 
 ENTRYPOINT ["./ambula"]

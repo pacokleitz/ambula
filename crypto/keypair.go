@@ -59,7 +59,7 @@ func (k PublicKey) String() string {
 	return hex.EncodeToString(k)
 }
 
-// Address returns the Public Address corresponding to the PublicKey
+// Address returns the public Address corresponding to the PublicKey
 func (k PublicKey) Address() Address {
 	h := Hash(blake2b.Sum256(k))
 	return Address(h)

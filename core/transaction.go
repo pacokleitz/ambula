@@ -18,7 +18,7 @@ var (
 // by the From sender and have the To receiver PublicKey.
 type Transaction struct {
 	Data      []byte
-	To        crypto.PublicKey
+	To        crypto.Address
 	Value     uint64
 	From      crypto.PublicKey
 	Signature *crypto.Signature
@@ -28,7 +28,7 @@ type Transaction struct {
 }
 
 // NewTransaction returns a Transaction with a random Nonce.
-func NewTransaction(data []byte, to crypto.PublicKey, value uint64) *Transaction {
+func NewTransaction(data []byte, to crypto.Address, value uint64) *Transaction {
 	// Temporary until possible to query existing nonces
 	nonce, err := random.RandomInt(math.MaxInt64)
 	if err != nil {

@@ -21,7 +21,7 @@ func TestVerifyTamperedTransactionReceiver(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Modify the receiver of the transaction after signature
-	tx.To = hackerPrivKey.PublicKey()
+	tx.To = hackerPrivKey.PublicKey().Address()
 	tx.InvalidateHash()
 
 	assert.NotNil(t, tx.Verify())
@@ -59,7 +59,7 @@ func genTxWithSignature(t *testing.T) *Transaction {
 	toPrivKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	tx := NewTransaction([]byte("foo"), toPrivKey.PublicKey(), 42)
+	tx := NewTransaction([]byte("foo"), toPrivKey.PublicKey().Address(), 42)
 	assert.Nil(t, tx.Sign(fromPrivKey))
 
 	return tx

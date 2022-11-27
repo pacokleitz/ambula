@@ -11,12 +11,12 @@ func TestSignRecoverPublicKey(t *testing.T) {
 	privKey, err := GeneratePrivateKey()
 	assert.Nil(t, err)
 	pubKey := privKey.PublicKey()
-	msg := []byte("thisisa32bytesstringmadefortests")
+	hash, _ := HashFromString(HASH_LEGIT)
 
-	sig, err := privKey.Sign(msg)
+	sig, err := privKey.Sign(hash)
 	assert.Nil(t, err)
 
-	sigPubKey, err := sig.PublicKey(msg)
+	sigPubKey, err := sig.PublicKey(hash)
 	assert.Nil(t, err)
 	assert.True(t, bytes.Equal(sigPubKey, pubKey))
 }
@@ -25,16 +25,17 @@ func TestSignRecoverublicKeyTampered(t *testing.T) {
 	privKey, err := GeneratePrivateKey()
 	assert.Nil(t, err)
 	pubKey := privKey.PublicKey()
-	msg := []byte("thisisa32bytesstringmadefortests")
 
-	sig, err := privKey.Sign(msg)
+	hash, _ := HashFromString(HASH_LEGIT)
+
+	sig, err := privKey.Sign(hash)
 	assert.Nil(t, err)
 
-	sigPubKey, err := sig.PublicKey(msg)
+	sigPubKey, err := sig.PublicKey(hash)
 	assert.Nil(t, err)
 
-	tamperedMsg := []byte("XXXXisa32bytesstringmadefortests")
-	alteredMsgSigPubKey, err := sig.PublicKey(tamperedMsg)
+	tamperedHash, _ := HashFromString(HASH_TAMPERED)
+	alteredMsgSigPubKey, err := sig.PublicKey(tamperedHash)
 	assert.Nil(t, err)
 
 	assert.False(t, bytes.Equal(alteredMsgSigPubKey, pubKey))
@@ -43,11 +44,11 @@ func TestSignRecoverublicKeyTampered(t *testing.T) {
 
 func BenchmarkPublicKeyRecover(b *testing.B) {
 	privKey, _ := GeneratePrivateKey()
-	msg := []byte("thisisa32bytesstringmadefortests")
+	hash, _ := HashFromString(HASH_LEGIT)
 
-	sig, _ := privKey.Sign(msg)
+	sig, _ := privKey.Sign(hash)
 
 	for i := 0; i < b.N; i++ {
-		_, _ = sig.PublicKey(msg)
+		_, _ = sig.PublicKey(hash)
 	}
 }

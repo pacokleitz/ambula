@@ -60,7 +60,7 @@ func (tx *Transaction) InvalidateHash() {
 // Sign a Transaction by signing the Transaction Hash and set the From field.
 func (tx *Transaction) Sign(privKey crypto.PrivateKey) error {
 	hash := tx.Hash(TxHasher{})
-	sig, err := privKey.Sign(hash.Bytes())
+	sig, err := privKey.Sign(hash)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (tx *Transaction) Signer() (crypto.PublicKey, error) {
 	}
 
 	hash := tx.Hash(TxHasher{})
-	sigPubKey, err := tx.Signature.PublicKey(hash.Bytes())
+	sigPubKey, err := tx.Signature.PublicKey(hash)
 	if err != nil {
 		return nil, fmt.Errorf("Tx [%s] signature verification failed.", hash.String())
 	}

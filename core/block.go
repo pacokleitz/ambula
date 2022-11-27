@@ -106,7 +106,7 @@ func (b *Block) AddTxx(txx []*Transaction) error {
 // Sign computes the signature of the HeaderHash which certifies the content of the Block.
 func (b *Block) Sign(privKey crypto.PrivateKey) error {
 	headerHash := b.HeaderHash(BlockHasher{})
-	sig, err := privKey.Sign(headerHash.Bytes())
+	sig, err := privKey.Sign(headerHash)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (b *Block) Verify() (crypto.PublicKey, error) {
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
-	sigPubKey, err := b.Signature.PublicKey(headerHash.Bytes())
+	sigPubKey, err := b.Signature.PublicKey(headerHash)
 	if err != nil {
 		return nil, fmt.Errorf("Block [%s] header signature public key recovery failed.", headerHash.String())
 	}

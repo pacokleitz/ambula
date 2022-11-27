@@ -9,7 +9,6 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	// "github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -18,9 +17,9 @@ type PrivateKey struct {
 	key *ecdsa.PrivateKey
 }
 
-// Sign returns the Signature of a slice of bytes.
-func (k PrivateKey) Sign(data []byte) (Signature, error) {
-	sig, err := crypto.Sign(data, k.key)
+// Sign returns the Signature of a slice of bytes of size 32 bytes.
+func (k PrivateKey) Sign(hash Hash) (Signature, error) {
+	sig, err := crypto.Sign(hash.Bytes(), k.key)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +74,8 @@ func (k PublicKey) Address() Address {
 type Signature []byte
 
 // PublicKey returns the PublicKey of the Signature signer.
-func (sig Signature) PublicKey(data []byte) (PublicKey, error) {
-	pubKey, err := crypto.Ecrecover(data, sig)
+func (sig Signature) PublicKey(hash Hash) (PublicKey, error) {
+	pubKey, err := crypto.Ecrecover(hash.Bytes(), sig)
 	if err != nil {
 		return nil, err
 	}

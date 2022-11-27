@@ -25,20 +25,27 @@ func TestBlockAddTx(t *testing.T) {
 
 	b := randomBlockWithoutSignature(t, 0, crypto.Hash{})
 
+	// Add a single signed Tx and check it was added
 	singleTx := genTxWithoutSignature(t)
 	assert.Nil(t, singleTx.Sign(privKey))
 	assert.Nil(t, b.AddTx(singleTx))
 	assert.Equal(t, b.Transactions, []*Transaction{singleTx})
 
+	// Add a batch of Tx and check it was added
 	multipleTx := []*Transaction{genTxWithoutSignature(t), genTxWithoutSignature(t)}
 	assert.Nil(t, multipleTx[0].Sign(privKey))
 	assert.Nil(t, multipleTx[1].Sign(privKey))
 	assert.Nil(t, b.AddTxx(multipleTx))
 	assert.Equal(t, b.Transactions, append([]*Transaction{singleTx}, multipleTx...))
 
+	// Sign the Block
 	assert.Nil(t, b.Sign(privKey))
 
-	blockSignerPublicKey, err := b.Verify()
+	// Recover the PublicKey of the Block signer and compare it to the PublicKey matching the PrivateKey used for signing
+	assert.Nil(t, b.VerifyData())
+
+	// Recover the PublicKey of the Block signer and compare it to the PublicKey matching the PrivateKey used for signing
+	blockSignerPublicKey, err := b.Signer()
 	assert.Nil(t, err)
 	assert.Equal(t, privKey.PublicKey().Address().String(), blockSignerPublicKey.Address().String())
 }

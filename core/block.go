@@ -116,10 +116,35 @@ func (b *Block) Sign(privKey crypto.PrivateKey) error {
 	return nil
 }
 
-// Verify checks that Block Txs match the Header DataHash,
-// checks that the signer PublicKey can be recovered for all Tx
-// and returns the Block signer PublicKey.
-func (b *Block) Verify() (crypto.PublicKey, error) {
+// VerifyData checks that the Block Transactions hash is matching the Header DataHash.
+func (b *Block) VerifyData() error {
+	if b.Signature == nil {
+		return BlockMissingSignature
+	}
+
+	headerHash := b.HeaderHash(BlockHasher{})
+
+	for _, tx := range b.Transactions {
+		_, err := tx.Signer()
+		if err != nil {
+			return err
+		}
+	}
+
+	computedDataHash, err := ComputeDataHash(b.Transactions)
+	if err != nil {
+		return err
+	}
+
+	if computedDataHash != b.DataHash {
+		return fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
+	}
+
+	return nil
+}
+
+// Signer returns the PublicKey of the Block Signature signer.
+func (b *Block) Signer() (crypto.PublicKey, error) {
 	if b.Signature == nil {
 		return nil, BlockMissingSignature
 	}
@@ -129,22 +154,6 @@ func (b *Block) Verify() (crypto.PublicKey, error) {
 	sigPubKey, err := b.Signature.PublicKey(headerHash)
 	if err != nil {
 		return nil, fmt.Errorf("Block [%s] header signature public key recovery failed.", headerHash.String())
-	}
-
-	for _, tx := range b.Transactions {
-		_, err := tx.Signer()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	computedDataHash, err := ComputeDataHash(b.Transactions)
-	if err != nil {
-		return nil, err
-	}
-
-	if computedDataHash != b.DataHash {
-		return nil, fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
 	}
 
 	return sigPubKey, nil

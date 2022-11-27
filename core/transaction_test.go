@@ -21,7 +21,7 @@ func TestTransactionRecoverSigner(t *testing.T) {
 	assert.Equal(t, txSigner.Address().String(), fromPrivKey.PublicKey().Address().String())
 }
 
-func TestVerifyTamperedTransactionReceiver(t *testing.T) {
+func TestTransactionVerifyTamperedReceiver(t *testing.T) {
 	fromPrivKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 

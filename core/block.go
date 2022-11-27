@@ -44,8 +44,7 @@ func (h *Header) Bytes() []byte {
 type Block struct {
 	*Header
 	Transactions []*Transaction
-	Validator    crypto.PublicKey
-	Signature    *crypto.Signature
+	Signature    crypto.Signature
 
 	headerHash crypto.Hash
 }
@@ -112,40 +111,43 @@ func (b *Block) Sign(privKey crypto.PrivateKey) error {
 		return err
 	}
 
-	b.Validator = privKey.PublicKey()
 	b.Signature = sig
 
 	return nil
 }
 
-// Verify checks the Block Transactions and Signature validity.
-func (b *Block) Verify() error {
+// Verify checks that Block Txs match the Header DataHash,
+// checks that the signer PublicKey can be recovered for all Tx
+// and returns the Block signer PublicKey.
+func (b *Block) Verify() (crypto.PublicKey, error) {
 	if b.Signature == nil {
-		return BlockMissingSignature
+		return nil, BlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
-	if !b.Signature.Verify(b.Validator, headerHash.Bytes()) {
-		return fmt.Errorf("Block [%s] header signature verification failed.", headerHash.String())
+	sigPubKey, err := b.Signature.PublicKey(headerHash.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("Block [%s] header signature public key recovery failed.", headerHash.String())
 	}
 
 	for _, tx := range b.Transactions {
-		if err := tx.Verify(); err != nil {
-			return err
+		_, err := tx.Signer()
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	computedDataHash, err := ComputeDataHash(b.Transactions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if computedDataHash != b.DataHash {
-		return fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
+		return nil, fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
 	}
 
-	return nil
+	return sigPubKey, nil
 }
 
 // Decode the Decoder into the Block.

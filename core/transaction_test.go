@@ -8,39 +8,44 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSignVerifyTransaction(t *testing.T) {
-	tx := genTxWithSignature(t)
+func TestTransactionRecoverSigner(t *testing.T) {
+	fromPrivKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
+	tx := genTxWithoutSignature(t)
+	assert.Nil(t, tx.Sign(fromPrivKey))
 	assert.NotNil(t, tx.Signature)
-	assert.Nil(t, tx.Verify())
+
+	txSigner, err := tx.Signer()
+	assert.Nil(t, err)
+	assert.Equal(t, txSigner.Address().String(), fromPrivKey.PublicKey().Address().String())
 }
 
 func TestVerifyTamperedTransactionReceiver(t *testing.T) {
-	tx := genTxWithSignature(t)
+	fromPrivKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
+	tx := genTxWithoutSignature(t)
+	assert.Nil(t, tx.Sign(fromPrivKey))
 
 	hackerPrivKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	// Modify the receiver of the transaction after signature
+	// Modify the receiver of the transaction after signature (we need invalidate the Hash cache manually)
 	tx.To = hackerPrivKey.PublicKey().Address()
 	tx.InvalidateHash()
 
-	assert.NotNil(t, tx.Verify())
-}
-
-func TestVerifyTamperedTransactionSender(t *testing.T) {
-	tx := genTxWithSignature(t)
-
-	hackerPrivKey, err := crypto.GeneratePrivateKey()
+	txSigner, err := tx.Signer()
 	assert.Nil(t, err)
-
-	// Modify the sender of the transaction after signature
-	tx.From = hackerPrivKey.PublicKey()
-
-	assert.NotNil(t, tx.Verify())
+	assert.NotEqual(t, txSigner.Address().String(), fromPrivKey.PublicKey().Address().String())
 }
 
 func TestTxEncodeDecode(t *testing.T) {
-	tx := genTxWithSignature(t)
+	fromPrivKey, err := crypto.GeneratePrivateKey()
+	assert.Nil(t, err)
+
+	tx := genTxWithoutSignature(t)
+	assert.Nil(t, tx.Sign(fromPrivKey))
 
 	// Hash is a private field and can't be accessed by encoder so we ignore it
 	tx.hash = crypto.Hash{}
@@ -53,14 +58,9 @@ func TestTxEncodeDecode(t *testing.T) {
 	assert.Equal(t, tx, txDecoded)
 }
 
-func genTxWithSignature(t *testing.T) *Transaction {
-	fromPrivKey, err := crypto.GeneratePrivateKey()
-	assert.Nil(t, err)
+func genTxWithoutSignature(t *testing.T) *Transaction {
 	toPrivKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
-
 	tx := NewTransaction([]byte("foo"), toPrivKey.PublicKey().Address(), 42)
-	assert.Nil(t, tx.Sign(fromPrivKey))
-
 	return tx
 }

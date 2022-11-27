@@ -13,7 +13,7 @@ func TestBlockSign(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, crypto.Hash{})
+	b := randomBlockWithoutSignature(t, 0, crypto.Hash{})
 
 	assert.Nil(t, b.Sign(privKey))
 	assert.NotNil(t, b.Signature)
@@ -23,48 +23,35 @@ func TestBlockAddTx(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, crypto.Hash{})
+	b := randomBlockWithoutSignature(t, 0, crypto.Hash{})
 
-	singleTx := genTxWithSignature(t)
+	singleTx := genTxWithoutSignature(t)
+	assert.Nil(t, singleTx.Sign(privKey))
 	assert.Nil(t, b.AddTx(singleTx))
 	assert.Equal(t, b.Transactions, []*Transaction{singleTx})
 
-	multipleTx := []*Transaction{genTxWithSignature(t), genTxWithSignature(t)}
+	multipleTx := []*Transaction{genTxWithoutSignature(t), genTxWithoutSignature(t)}
+	assert.Nil(t, multipleTx[0].Sign(privKey))
+	assert.Nil(t, multipleTx[1].Sign(privKey))
 	assert.Nil(t, b.AddTxx(multipleTx))
 	assert.Equal(t, b.Transactions, append([]*Transaction{singleTx}, multipleTx...))
 
 	assert.Nil(t, b.Sign(privKey))
-	assert.Nil(t, b.Verify())
+
+	blockSignerPublicKey, err := b.Verify()
+	assert.Nil(t, err)
+	assert.Equal(t, privKey.PublicKey().Address().String(), blockSignerPublicKey.Address().String())
 }
 
-func TestVerifyBlock(t *testing.T) {
+func TestBlockDecodeEncode(t *testing.T) {
 	privKey, err := crypto.GeneratePrivateKey()
 	assert.Nil(t, err)
 
-	b := randomBlock(t, 0, crypto.Hash{})
-
-	// Sign and verify the block
+	b := randomBlockWithoutSignature(t, 1, crypto.Hash{})
 	assert.Nil(t, b.Sign(privKey))
-	assert.Nil(t, b.Verify())
-
-	// Add a new tx to the block to invalidate signature
-	assert.Nil(t, b.AddTx(genTxWithSignature(t)))
-	assert.NotNil(t, b.Verify())
-
-	// Refresh the signature to match content of the block
-	assert.Nil(t, b.Sign(privKey))
-	assert.Nil(t, b.Verify())
-
-	// Switch the Validator of the block and try to verify signature
-	otherPrivKey, err := crypto.GeneratePrivateKey()
-	assert.Nil(t, err)
-	b.Validator = otherPrivKey.PublicKey()
-	assert.NotNil(t, b.Verify())
-}
-
-func TestDecodeEncodeBlock(t *testing.T) {
-	b := randomBlock(t, 1, crypto.Hash{})
-	multipleTx := []*Transaction{genTxWithSignature(t), genTxWithSignature(t)}
+	multipleTx := []*Transaction{genTxWithoutSignature(t), genTxWithoutSignature(t)}
+	assert.Nil(t, multipleTx[0].Sign(privKey))
+	assert.Nil(t, multipleTx[1].Sign(privKey))
 	assert.Nil(t, b.AddTxx(multipleTx))
 
 	blockEncoded := &bytes.Buffer{}
@@ -80,14 +67,10 @@ func TestDecodeEncodeBlock(t *testing.T) {
 		assert.Equal(t, b.Transactions[i], blockDecoded.Transactions[i])
 	}
 
-	assert.Equal(t, b.Validator, blockDecoded.Validator)
 	assert.Equal(t, b.Signature, blockDecoded.Signature)
 }
 
-func randomBlock(t *testing.T, height uint32, prevBlockHash crypto.Hash) *Block {
-	privKey, err := crypto.GeneratePrivateKey()
-	assert.Nil(t, err)
-
+func randomBlockWithoutSignature(t *testing.T, height uint32, prevBlockHash crypto.Hash) *Block {
 	header := &Header{
 		Version:       1,
 		PrevBlockHash: prevBlockHash,
@@ -102,7 +85,6 @@ func randomBlock(t *testing.T, height uint32, prevBlockHash crypto.Hash) *Block 
 	assert.Nil(t, err)
 
 	b.Header.DataHash = dataHash
-	assert.Nil(t, b.Sign(privKey))
 
 	return b
 }

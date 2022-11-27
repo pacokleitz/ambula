@@ -20,8 +20,7 @@ type Transaction struct {
 	Data      []byte
 	To        crypto.Address
 	Value     uint64
-	From      crypto.PublicKey
-	Signature *crypto.Signature
+	Signature crypto.Signature
 	Nonce     int64
 
 	hash crypto.Hash
@@ -66,24 +65,24 @@ func (tx *Transaction) Sign(privKey crypto.PrivateKey) error {
 		return err
 	}
 
-	tx.From = privKey.PublicKey()
 	tx.Signature = sig
 
 	return nil
 }
 
-// Verify that the Transaction signature is valid.
-func (tx *Transaction) Verify() error {
+// Signer returns the PublicKey of the Transaction signer.
+func (tx *Transaction) Signer() (crypto.PublicKey, error) {
 	if tx.Signature == nil {
-		return TxMissingSignature
+		return nil, TxMissingSignature
 	}
 
 	hash := tx.Hash(TxHasher{})
-	if !tx.Signature.Verify(tx.From, hash.Bytes()) {
-		return fmt.Errorf("Tx [%s] signature verification failed.", hash.String())
+	sigPubKey, err := tx.Signature.PublicKey(hash.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("Tx [%s] signature verification failed.", hash.String())
 	}
 
-	return nil
+	return sigPubKey, nil
 }
 
 // Decode the Decoder into the Transaction.

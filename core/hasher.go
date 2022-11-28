@@ -37,10 +37,6 @@ func (TxHasher) Hash(tx *Transaction) crypto.Hash {
 		panic(err)
 	}
 
-	if err := binary.Write(buf, binary.LittleEndian, tx.From); err != nil {
-		panic(err)
-	}
-
 	if err := binary.Write(buf, binary.LittleEndian, tx.Nonce); err != nil {
 		panic(err)
 	}

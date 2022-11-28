@@ -2,13 +2,14 @@ package crypto
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
 	"io"
-	"math/big"
+	"log"
 
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // A PrivateKey is used for signing objects.
@@ -16,22 +17,19 @@ type PrivateKey struct {
 	key *ecdsa.PrivateKey
 }
 
-// Sign returns the Signature of a slice of bytes.
-func (k PrivateKey) Sign(data []byte) (*Signature, error) {
-	r, s, err := ecdsa.Sign(rand.Reader, k.key, data)
+// Sign returns the Signature of a slice of bytes of size 32 bytes.
+func (k PrivateKey) Sign(hash Hash) (Signature, error) {
+	sig, err := crypto.Sign(hash.Bytes(), k.key)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Signature{
-		R: r,
-		S: s,
-	}, nil
+	return Signature(sig), nil
 }
 
 // NewPrivateKeyFromReader returns a random PrivateKey from a io.Reader entropy.
 func NewPrivateKeyFromReader(r io.Reader) (PrivateKey, error) {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), r)
+	key, err := crypto.GenerateKey()
 	if err != nil {
 		return PrivateKey{}, err
 	}
@@ -48,7 +46,14 @@ func GeneratePrivateKey() (PrivateKey, error) {
 
 // PublicKey returns the PublicKey of the PrivateKey.
 func (k PrivateKey) PublicKey() PublicKey {
-	return elliptic.MarshalCompressed(k.key.PublicKey, k.key.PublicKey.X, k.key.PublicKey.Y)
+	publicKey := k.key.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+
+	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
+	return publicKeyBytes
 }
 
 // PublicKey is used to verify a PrivateKey signature.
@@ -66,25 +71,19 @@ func (k PublicKey) Address() Address {
 }
 
 // A Signature is used to prove that some data was signed by a PrivateKey.
-type Signature struct {
-	S *big.Int
-	R *big.Int
+type Signature []byte
+
+// PublicKey returns the PublicKey of the Signature signer.
+func (sig Signature) PublicKey(hash Hash) (PublicKey, error) {
+	pubKey, err := crypto.Ecrecover(hash.Bytes(), sig)
+	if err != nil {
+		return nil, err
+	}
+
+	return PublicKey(pubKey), nil
 }
 
 // String returns a hexadecimal string encoding of the Signature.
 func (sig Signature) String() string {
-	b := append(sig.S.Bytes(), sig.R.Bytes()...)
-	return hex.EncodeToString(b)
-}
-
-// Verify checks that the Signature was signed by pubKey PublicKey for the data byte slice.
-func (sig Signature) Verify(pubKey PublicKey, data []byte) bool {
-	x, y := elliptic.UnmarshalCompressed(elliptic.P256(), pubKey)
-	key := &ecdsa.PublicKey{
-		Curve: elliptic.P256(),
-		X:     x,
-		Y:     y,
-	}
-
-	return ecdsa.Verify(key, data, sig.R, sig.S)
+	return hex.EncodeToString(sig)
 }

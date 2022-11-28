@@ -44,8 +44,7 @@ func (h *Header) Bytes() []byte {
 type Block struct {
 	*Header
 	Transactions []*Transaction
-	Validator    crypto.PublicKey
-	Signature    *crypto.Signature
+	Signature    crypto.Signature
 
 	headerHash crypto.Hash
 }
@@ -107,31 +106,27 @@ func (b *Block) AddTxx(txx []*Transaction) error {
 // Sign computes the signature of the HeaderHash which certifies the content of the Block.
 func (b *Block) Sign(privKey crypto.PrivateKey) error {
 	headerHash := b.HeaderHash(BlockHasher{})
-	sig, err := privKey.Sign(headerHash.Bytes())
+	sig, err := privKey.Sign(headerHash)
 	if err != nil {
 		return err
 	}
 
-	b.Validator = privKey.PublicKey()
 	b.Signature = sig
 
 	return nil
 }
 
-// Verify checks the Block Transactions and Signature validity.
-func (b *Block) Verify() error {
+// VerifyData checks that the Block Transactions hash is matching the Header DataHash.
+func (b *Block) VerifyData() error {
 	if b.Signature == nil {
 		return BlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
-	if !b.Signature.Verify(b.Validator, headerHash.Bytes()) {
-		return fmt.Errorf("Block [%s] header signature verification failed.", headerHash.String())
-	}
-
 	for _, tx := range b.Transactions {
-		if err := tx.Verify(); err != nil {
+		_, err := tx.Signer()
+		if err != nil {
 			return err
 		}
 	}
@@ -146,6 +141,22 @@ func (b *Block) Verify() error {
 	}
 
 	return nil
+}
+
+// Signer returns the PublicKey of the Block Signature signer.
+func (b *Block) Signer() (crypto.PublicKey, error) {
+	if b.Signature == nil {
+		return nil, BlockMissingSignature
+	}
+
+	headerHash := b.HeaderHash(BlockHasher{})
+
+	sigPubKey, err := b.Signature.PublicKey(headerHash)
+	if err != nil {
+		return nil, fmt.Errorf("Block [%s] header signature public key recovery failed.", headerHash.String())
+	}
+
+	return sigPubKey, nil
 }
 
 // Decode the Decoder into the Block.

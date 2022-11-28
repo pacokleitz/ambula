@@ -8,7 +8,7 @@ This new puzzle does not consume nearly as much energy as PoW as it is based on 
 We use [Task](https://taskfile.dev/) as a task runner. You can install it from [here](https://taskfile.dev/installation/).  
 You can run the following tasks with `task <task_name>`:
 
-```
+```txt
 task -l   
 task: Available tasks for this project:
 * build:        Build the go binary.

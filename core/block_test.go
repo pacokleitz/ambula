@@ -15,6 +15,7 @@ func TestBlockSign(t *testing.T) {
 
 	b := randomBlockWithoutSignature(t, 0, crypto.Hash{})
 
+	// Sign and check that the Signature was added to Block
 	assert.Nil(t, b.Sign(privKey))
 	assert.NotNil(t, b.Signature)
 }
@@ -55,25 +56,34 @@ func TestBlockDecodeEncode(t *testing.T) {
 	assert.Nil(t, err)
 
 	b := randomBlockWithoutSignature(t, 1, crypto.Hash{})
-	assert.Nil(t, b.Sign(privKey))
+
+	// Add multiple signed Tx to the Block
 	multipleTx := []*Transaction{genTxWithoutSignature(t), genTxWithoutSignature(t)}
 	assert.Nil(t, multipleTx[0].Sign(privKey))
 	assert.Nil(t, multipleTx[1].Sign(privKey))
 	assert.Nil(t, b.AddTxx(multipleTx))
 
+	// Sign the Block
+	assert.Nil(t, b.Sign(privKey))
+
+	// Encode the block
 	blockEncoded := &bytes.Buffer{}
 	assert.Nil(t, b.Encode(NewGobBlockEncoder(blockEncoded)))
 
+	// Decode the encoded block
 	blockDecoded := new(Block)
 	assert.Nil(t, blockDecoded.Decode(NewGobBlockDecoder(blockEncoded)))
 
+	// Compare decoded block Header with original Header
 	assert.Equal(t, b.Header, blockDecoded.Header)
 
+	// Compare decoded block Transactions with original Transactions
 	for i := 0; i < len(b.Transactions); i++ {
 		b.Transactions[i].hash = crypto.Hash{}
 		assert.Equal(t, b.Transactions[i], blockDecoded.Transactions[i])
 	}
 
+	// Compare decoded block Signature with original Signature
 	assert.Equal(t, b.Signature, blockDecoded.Signature)
 }
 

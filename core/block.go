@@ -15,10 +15,11 @@ import (
 
 var (
 	BlockMissingSignature = errors.New("The verified block has no signature.")
+	BlockMissingProof     = errors.New("The verified block has no PoI proof.")
 )
 
 // PROTOCOL_VERSION represents the version of the Block format.
-const PROTOCOL_VERSION = 1
+const PROTOCOL_VERSION = 2 // Updated for PoI support
 
 // A Header is storing a Block metadatas.
 type Header struct {
@@ -27,6 +28,7 @@ type Header struct {
 	PrevBlockHash crypto.Hash
 	Height        uint32
 	Timestamp     int64
+	Difficulty    Difficulty // PoI difficulty for this block
 }
 
 // Bytes returns the byte slice representation of the Header.
@@ -40,11 +42,12 @@ func (h *Header) Bytes() []byte {
 	return buf.Bytes()
 }
 
-// A Block contains a set of Transactions and the Signature of the Validator.
+// A Block contains a set of Transactions and either a Signature (legacy) or a PoI Proof.
 type Block struct {
 	*Header
 	Transactions []*Transaction
-	Signature    crypto.Signature
+	Signature    crypto.Signature      // Legacy: simple signature (for testing/backward compatibility)
+	Proof        *ProofOfInteraction   // PoI proof (used in PoI consensus)
 
 	headerHash crypto.Hash
 }
@@ -117,13 +120,16 @@ func (b *Block) Sign(privKey crypto.PrivateKey) error {
 }
 
 // VerifyData checks that the Block Transactions hash is matching the Header DataHash.
+// For PoI blocks, this should be followed by VerifyProof().
 func (b *Block) VerifyData() error {
-	if b.Signature == nil {
+	// Check that block has either signature or proof
+	if b.Signature == nil && b.Proof == nil {
 		return BlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
+	// Verify all transactions are properly signed
 	for _, tx := range b.Transactions {
 		_, err := tx.Signer()
 		if err != nil {
@@ -131,6 +137,7 @@ func (b *Block) VerifyData() error {
 		}
 	}
 
+	// Verify data hash matches transactions
 	computedDataHash, err := ComputeDataHash(b.Transactions)
 	if err != nil {
 		return err
@@ -144,7 +151,14 @@ func (b *Block) VerifyData() error {
 }
 
 // Signer returns the PublicKey of the Block Signature signer.
+// For PoI blocks, use Initiator() instead.
 func (b *Block) Signer() (crypto.PublicKey, error) {
+	// Try PoI proof first
+	if b.Proof != nil {
+		return b.Initiator()
+	}
+
+	// Fallback to legacy signature
 	if b.Signature == nil {
 		return nil, BlockMissingSignature
 	}
@@ -157,6 +171,55 @@ func (b *Block) Signer() (crypto.PublicKey, error) {
 	}
 
 	return sigPubKey, nil
+}
+
+// SetProof sets the PoI proof for this block.
+func (b *Block) SetProof(proof *ProofOfInteraction) {
+	b.Proof = proof
+}
+
+// Initiator returns the PublicKey of the PoI initiator (block creator).
+func (b *Block) Initiator() (crypto.PublicKey, error) {
+	if b.Proof == nil {
+		return nil, BlockMissingProof
+	}
+
+	// Recover public key from initial signature
+	prevBlockHash := b.PrevBlockHash
+	pubKey, err := b.Proof.InitialSig.PublicKey(prevBlockHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to recover initiator public key: %w", err)
+	}
+
+	return pubKey, nil
+}
+
+// VerifyProof verifies the PoI proof for this block.
+// This checks that the proof is valid for the block's content and difficulty.
+func (b *Block) VerifyProof(ctx PoIContext) error {
+	if b.Proof == nil {
+		return BlockMissingProof
+	}
+
+	// Get the initiator public key
+	initiator, err := b.Initiator()
+	if err != nil {
+		return fmt.Errorf("failed to get initiator: %w", err)
+	}
+
+	// Verify the PoI proof
+	dependency := b.PrevBlockHash
+	message := b.DataHash
+
+	// Update context with block's difficulty
+	ctx.Difficulty = b.Difficulty
+
+	err = CheckPoI(b.Proof, initiator, dependency, message, ctx)
+	if err != nil {
+		return fmt.Errorf("PoI verification failed: %w", err)
+	}
+
+	return nil
 }
 
 // Decode the Decoder into the Block.

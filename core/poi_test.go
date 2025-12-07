@@ -3,6 +3,8 @@ package core
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/pacokleitz/ambula/crypto"
@@ -39,8 +41,10 @@ func TestDifficulty_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.diff.Validate()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Difficulty.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -49,9 +53,7 @@ func TestDifficulty_Validate(t *testing.T) {
 func TestDifficulty_Mean(t *testing.T) {
 	diff := Difficulty{Min: 10, Max: 100}
 	expected := uint32(55)
-	if got := diff.Mean(); got != expected {
-		t.Errorf("Difficulty.Mean() = %v, want %v", got, expected)
-	}
+	assert.Equal(t, expected, diff.Mean())
 }
 
 func TestCreateServices(t *testing.T) {
@@ -59,9 +61,7 @@ func TestCreateServices(t *testing.T) {
 	nodes := make([]crypto.PublicKey, 50)
 	for i := 0; i < 50; i++ {
 		privKey, err := crypto.GeneratePrivateKey()
-		if err != nil {
-			t.Fatalf("failed to generate private key: %v", err)
-		}
+		require.NoError(t, err)
 		nodes[i] = privKey.PublicKey()
 	}
 
@@ -69,18 +69,14 @@ func TestCreateServices(t *testing.T) {
 	privKey, _ := crypto.GeneratePrivateKey()
 	hash := crypto.Hash(blake2b.Sum256([]byte("test")))
 	seed, err := privKey.Sign(hash)
-	if err != nil {
-		t.Fatalf("failed to create seed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Test createServices
 	services := createServices(nodes, seed)
 
 	// Check subset size is min(20, n/2)
 	expectedSize := 20 // min(20, 50/2) = 20
-	if len(services) != expectedSize {
-		t.Errorf("createServices() returned %d nodes, want %d", len(services), expectedSize)
-	}
+	assert.Equal(t, expectedSize, len(services))
 
 	// Verify all services are from the original node list
 	for _, service := range services {
@@ -91,24 +87,18 @@ func TestCreateServices(t *testing.T) {
 				break
 			}
 		}
-		if !found {
-			t.Errorf("service node not found in original node list")
-		}
+		assert.True(t, found, "service node not found in original node list")
 	}
 
 	// Test determinism: same seed should produce same services
 	services2 := createServices(nodes, seed)
-	if len(services) != len(services2) {
-		t.Errorf("createServices() not deterministic: different lengths")
-	}
+	assert.Equal(t, len(services), len(services2), "createServices() not deterministic: different lengths")
 	for i := range services {
-		if string(services[i]) != string(services2[i]) {
-			t.Errorf("createServices() not deterministic: node %d differs", i)
-		}
+		assert.Equal(t, string(services[i]), string(services2[i]), "createServices() not deterministic: node %d differs", i)
 	}
 }
 
-func TestCreateServices_SmallNetwork(t *testing.T) {
+func TestCreateServicesSmallNetwork(t *testing.T) {
 	// Test with small network (< 20 nodes)
 	nodes := make([]crypto.PublicKey, 10)
 	for i := 0; i < 10; i++ {
@@ -124,9 +114,7 @@ func TestCreateServices_SmallNetwork(t *testing.T) {
 
 	// Should be min(20, 10/2) = 5
 	expectedSize := 5
-	if len(services) != expectedSize {
-		t.Errorf("createServices() with small network returned %d nodes, want %d", len(services), expectedSize)
-	}
+	assert.Equal(t, expectedSize, len(services))
 }
 
 func TestTourLength(t *testing.T) {
@@ -137,20 +125,15 @@ func TestTourLength(t *testing.T) {
 	seed, _ := privKey.Sign(hash)
 
 	length, err := tourLength(difficulty, seed)
-	if err != nil {
-		t.Fatalf("tourLength() error = %v", err)
-	}
+	require.NoError(t, err)
 
 	// Check length is in valid range
-	if length < difficulty.Min || length > difficulty.Max {
-		t.Errorf("tourLength() = %d, want in range [%d, %d]", length, difficulty.Min, difficulty.Max)
-	}
+	assert.GreaterOrEqual(t, length, difficulty.Min)
+	assert.LessOrEqual(t, length, difficulty.Max)
 
 	// Test determinism
 	length2, _ := tourLength(difficulty, seed)
-	if length != length2 {
-		t.Errorf("tourLength() not deterministic: %d != %d", length, length2)
-	}
+	assert.Equal(t, length, length2)
 }
 
 func TestGenerateAndCheckPoI(t *testing.T) {
@@ -161,18 +144,14 @@ func TestGenerateAndCheckPoI(t *testing.T) {
 
 	for i := 0; i < numNodes; i++ {
 		privKey, err := crypto.GeneratePrivateKey()
-		if err != nil {
-			t.Fatalf("failed to generate private key: %v", err)
-		}
+		require.NoError(t, err)
 		nodes[i] = privKey.PublicKey()
 		nodePrivKeys[string(privKey.PublicKey())] = privKey
 	}
 
 	// Create initiator
 	initiatorPrivKey, err := crypto.GeneratePrivateKey()
-	if err != nil {
-		t.Fatalf("failed to generate initiator key: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Setup context
 	difficulty := Difficulty{Min: 5, Max: 10}
@@ -189,10 +168,7 @@ func TestGenerateAndCheckPoI(t *testing.T) {
 	signatureProvider := func(req SignatureRequest, service crypto.PublicKey) (crypto.Signature, error) {
 		// Find the private key for this service
 		privKey, ok := nodePrivKeys[string(service)]
-		if !ok {
-			t.Errorf("service node not found in node list")
-			return nil, ErrInvalidService
-		}
+		require.True(t, ok, "service node not found in node list")
 
 		// Sign the request
 		reqBytes := req.Bytes()
@@ -202,29 +178,19 @@ func TestGenerateAndCheckPoI(t *testing.T) {
 
 	// Generate PoI
 	poi, err := GeneratePoI(initiatorPrivKey, dependency, message, ctx, signatureProvider)
-	if err != nil {
-		t.Fatalf("GeneratePoI() error = %v", err)
-	}
-
-	// Verify PoI is not nil
-	if poi == nil {
-		t.Fatal("GeneratePoI() returned nil PoI")
-	}
+	require.NoError(t, err)
+	require.NotNil(t, poi)
 
 	// Verify PoI length is within expected range
 	expectedLength, _ := tourLength(difficulty, poi.InitialSig)
-	if uint32(poi.Length()) != expectedLength {
-		t.Errorf("PoI length = %d, want %d", poi.Length(), expectedLength)
-	}
+	assert.Equal(t, expectedLength, uint32(poi.Length()))
 
 	// Check PoI
 	err = CheckPoI(poi, initiatorPrivKey.PublicKey(), dependency, message, ctx)
-	if err != nil {
-		t.Errorf("CheckPoI() error = %v", err)
-	}
+	assert.NoError(t, err)
 }
 
-func TestCheckPoI_InvalidInitiator(t *testing.T) {
+func TestCheckPoIInvalidInitiator(t *testing.T) {
 	// Setup similar to TestGenerateAndCheckPoI
 	numNodes := 30
 	nodes := make([]crypto.PublicKey, numNodes)
@@ -255,19 +221,15 @@ func TestCheckPoI_InvalidInitiator(t *testing.T) {
 
 	// Generate PoI
 	poi, err := GeneratePoI(initiatorPrivKey, dependency, message, ctx, signatureProvider)
-	if err != nil {
-		t.Fatalf("GeneratePoI() error = %v", err)
-	}
+	require.NoError(t, err)
 
 	// Try to verify with wrong initiator
 	wrongInitiator, _ := crypto.GeneratePrivateKey()
 	err = CheckPoI(poi, wrongInitiator.PublicKey(), dependency, message, ctx)
-	if err == nil {
-		t.Error("CheckPoI() should fail with wrong initiator, but succeeded")
-	}
+	assert.Error(t, err)
 }
 
-func TestCheckPoI_WrongDependency(t *testing.T) {
+func TestCheckPoIWrongDependency(t *testing.T) {
 	numNodes := 30
 	nodes := make([]crypto.PublicKey, numNodes)
 	nodePrivKeys := make(map[string]crypto.PrivateKey)
@@ -300,9 +262,7 @@ func TestCheckPoI_WrongDependency(t *testing.T) {
 	// Try to verify with wrong dependency
 	wrongDependency := crypto.Hash(blake2b.Sum256([]byte("wrong dependency")))
 	err := CheckPoI(poi, initiatorPrivKey.PublicKey(), wrongDependency, message, ctx)
-	if err == nil {
-		t.Error("CheckPoI() should fail with wrong dependency, but succeeded")
-	}
+	assert.Error(t, err)
 }
 
 func TestAdjustDifficulty(t *testing.T) {
@@ -351,26 +311,23 @@ func TestAdjustDifficulty(t *testing.T) {
 			currentMean := tt.currentDiff.Mean()
 			newMean := newDiff.Mean()
 
-			if tt.expectIncrease && newMean <= currentMean {
-				t.Errorf("expected difficulty to increase, but mean went from %d to %d", currentMean, newMean)
+			if tt.expectIncrease {
+				assert.Greater(t, newMean, currentMean, "expected difficulty to increase")
 			}
 
-			if tt.expectDecrease && newMean >= currentMean {
-				t.Errorf("expected difficulty to decrease, but mean went from %d to %d", currentMean, newMean)
+			if tt.expectDecrease {
+				assert.Less(t, newMean, currentMean, "expected difficulty to decrease")
 			}
 
-			if !tt.expectIncrease && !tt.expectDecrease && newMean != currentMean {
+			if !tt.expectIncrease && !tt.expectDecrease {
 				// Allow small rounding differences
 				diff := int(newMean) - int(currentMean)
-				if diff < -1 || diff > 1 {
-					t.Errorf("expected difficulty to stay similar, but mean went from %d to %d", currentMean, newMean)
-				}
+				assert.GreaterOrEqual(t, diff, -1, "expected difficulty to stay similar")
+				assert.LessOrEqual(t, diff, 1, "expected difficulty to stay similar")
 			}
 
 			// Ensure new difficulty is valid
-			if err := newDiff.Validate(); err != nil {
-				t.Errorf("adjusted difficulty is invalid: %v", err)
-			}
+			assert.NoError(t, newDiff.Validate(), "adjusted difficulty should be valid")
 		})
 	}
 }

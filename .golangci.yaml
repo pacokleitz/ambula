@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 linters:
   enable:
@@ -11,17 +11,3 @@ linters:
 formatters:
   enable:
     - gofmt
-
-linters-settings:
-  funlen:
-    lines: 100
-    statements: 50
-  gosec:
-    excludes:
-      - G404 # Use of weak random is intentional for deterministic PoI
-      - G115 # Integer overflow conversions are checked
-  mnd:
-    ignored-functions:
-      - 'time.Sleep'
-      - 'time.After'
-      - 'time.NewTicker'

@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	ErrInvalidPoI           = errors.New("invalid proof of interaction")
-	ErrInvalidSignature     = errors.New("invalid signature in PoI")
-	ErrInvalidPoILength     = errors.New("PoI length does not match expected tour length")
-	ErrInvalidService       = errors.New("invalid service node in tour")
-	ErrEmptyNodeList        = errors.New("node list cannot be empty")
-	ErrInvalidDifficulty    = errors.New("invalid difficulty parameters")
+	ErrInvalidPoI        = errors.New("invalid proof of interaction")
+	ErrInvalidSignature  = errors.New("invalid signature in PoI")
+	ErrInvalidPoILength  = errors.New("PoI length does not match expected tour length")
+	ErrInvalidService    = errors.New("invalid service node in tour")
+	ErrEmptyNodeList     = errors.New("node list cannot be empty")
+	ErrInvalidDifficulty = errors.New("invalid difficulty parameters")
 )
 
 // DEFAULT_SERVICE_SIZE is the default size of the service subset.

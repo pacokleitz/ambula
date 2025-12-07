@@ -331,7 +331,7 @@ func (n *PoINode) PublicKey() crypto.PublicKey {
 // This allows nodes to find each other on the network.
 type NodeRegistry struct {
 	mu        sync.RWMutex
-	addrMap   map[string]net.Addr     // pubKey string -> address
+	addrMap   map[string]net.Addr         // pubKey string -> address
 	pubKeyMap map[string]crypto.PublicKey // address string -> pubKey
 }
 

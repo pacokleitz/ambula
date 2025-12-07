@@ -48,7 +48,7 @@ func (s *LedgerState) GetAccount(address crypto.Address) (*Account, error) {
 func (s *LedgerState) getAccountWithoutLock(address crypto.Address) (*Account, error) {
 	acc, ok := s.accounts[address]
 	if !ok {
-		return nil, fmt.Errorf("Account %s can not be found in LedgerState.", address.String())
+		return nil, fmt.Errorf("account %s cannot be found in ledger state", address.String())
 	}
 
 	return acc, nil
@@ -78,7 +78,7 @@ func (ls *LedgerState) Transfer(from, to crypto.Address, amount uint64) error {
 	}
 
 	if fromAccount.Balance < amount {
-		return fmt.Errorf("Account %s does not have sufficient funds for transfer.", fromAccount.Address.String())
+		return fmt.Errorf("account %s does not have sufficient funds for transfer", fromAccount.Address.String())
 	}
 
 	if ls.accounts[to] == nil {

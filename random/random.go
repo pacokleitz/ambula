@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	InvalidUpperBound = errors.New("The RandomInt upper bound should be > 0.")
+	ErrInvalidUpperBound = errors.New("the RandomInt upper bound should be > 0")
 )
 
 // RandomInt returns a random Int64 between [0, upperBound).
 func RandomInt(upperBound int64) (int64, error) {
 	if upperBound < 0 {
-		return 0, InvalidUpperBound
+		return 0, ErrInvalidUpperBound
 	}
 
 	randomValue, err := rand.Int(rand.Reader, big.NewInt(upperBound))

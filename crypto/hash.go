@@ -49,7 +49,7 @@ func HashFromString(hstr string) (Hash, error) {
 // HashFromBytes returns a Hash given a HASH_BYTE_SIZE byte slice.
 func HashFromBytes(b []byte) (Hash, error) {
 	if len(b) != HASH_BYTE_SIZE {
-		return Hash{}, fmt.Errorf("Byte slice length %d should match hash length %d", len(b), HASH_BYTE_SIZE)
+		return Hash{}, fmt.Errorf("byte slice length %d should match hash length %d", len(b), HASH_BYTE_SIZE)
 	}
 
 	var uints [HASH_BYTE_SIZE]uint8

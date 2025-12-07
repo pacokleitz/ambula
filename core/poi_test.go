@@ -307,13 +307,13 @@ func TestCheckPoI_WrongDependency(t *testing.T) {
 
 func TestAdjustDifficulty(t *testing.T) {
 	tests := []struct {
-		name             string
-		currentDiff      Difficulty
-		targetBlockTime  float64
-		actualBlockTime  float64
-		numNodes         int
-		expectIncrease   bool
-		expectDecrease   bool
+		name            string
+		currentDiff     Difficulty
+		targetBlockTime float64
+		actualBlockTime float64
+		numNodes        int
+		expectIncrease  bool
+		expectDecrease  bool
 	}{
 		{
 			name:            "blocks too fast - increase difficulty",

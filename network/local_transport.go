@@ -54,7 +54,7 @@ func (tr *LocalTransport) SendMessage(to net.Addr, payload []byte) error {
 
 	peerTr, ok := tr.peers[to]
 	if !ok {
-		return fmt.Errorf("Transport %s on %s network could not find peer %s.", tr.Addr().String(), tr.Addr().Network(), to)
+		return fmt.Errorf("transport %s on %s network could not find peer %s", tr.Addr().String(), tr.Addr().Network(), to)
 	}
 
 	peerTr.rpcCh <- RPC{

@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	TxMissingSignature = errors.New("The verified transaction has no signature.")
+	ErrTxMissingSignature = errors.New("the verified transaction has no signature")
 )
 
 // A Transaction is the object consumed for every data or value
@@ -73,13 +73,13 @@ func (tx *Transaction) Sign(privKey crypto.PrivateKey) error {
 // Signer returns the PublicKey of the Transaction signer.
 func (tx *Transaction) Signer() (crypto.PublicKey, error) {
 	if tx.Signature == nil {
-		return nil, TxMissingSignature
+		return nil, ErrTxMissingSignature
 	}
 
 	hash := tx.Hash(TxHasher{})
 	sigPubKey, err := tx.Signature.PublicKey(hash)
 	if err != nil {
-		return nil, fmt.Errorf("Tx [%s] signature verification failed.", hash.String())
+		return nil, fmt.Errorf("tx [%s] signature verification failed", hash.String())
 	}
 
 	return sigPubKey, nil

@@ -101,7 +101,7 @@ func randomBlockWithoutSignature(t *testing.T, height uint32, prevBlockHash cryp
 	dataHash, err := ComputeDataHash(b.Transactions)
 	assert.Nil(t, err)
 
-	b.Header.DataHash = dataHash
+	b.DataHash = dataHash
 
 	return b
 }

@@ -9,15 +9,15 @@ import (
 type MessageType byte
 
 const (
-	MessageTypeTx               MessageType = 0x1 // Transaction MessageType
-	MessageTypeBlock            MessageType = 0x2 // Block MessageType
-	MessageTypeBlockRequest     MessageType = 0x3 // Block Request MessageType
-	MessageTypeStatus           MessageType = 0x4 // Node Status MessageType
-	MessageTypeStatusRequest    MessageType = 0x5 // Node Status Request MessageType
-	MessageTypeBlocks           MessageType = 0x6 // Batch Block MessageType
-	MessageTypePoISignRequest   MessageType = 0x7 // PoI Signature Request MessageType
-	MessageTypePoISignResponse  MessageType = 0x8 // PoI Signature Response MessageType
-	MessageTypePoIPenalty       MessageType = 0x9 // PoI Penalty Report MessageType
+	MessageTypeTx              MessageType = 0x1 // Transaction MessageType
+	MessageTypeBlock           MessageType = 0x2 // Block MessageType
+	MessageTypeBlockRequest    MessageType = 0x3 // Block Request MessageType
+	MessageTypeStatus          MessageType = 0x4 // Node Status MessageType
+	MessageTypeStatusRequest   MessageType = 0x5 // Node Status Request MessageType
+	MessageTypeBlocks          MessageType = 0x6 // Batch Block MessageType
+	MessageTypePoISignRequest  MessageType = 0x7 // PoI Signature Request MessageType
+	MessageTypePoISignResponse MessageType = 0x8 // PoI Signature Response MessageType
+	MessageTypePoIPenalty      MessageType = 0x9 // PoI Penalty Report MessageType
 )
 
 // A RPC is transmitted over Tranports.

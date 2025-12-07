@@ -38,20 +38,20 @@ type Blockchain struct {
 	mu sync.RWMutex
 
 	// Chain storage
-	blocks       map[string]*Block      // blockHash -> Block
-	blocksByHeight map[uint32][]*Block   // height -> []*Block (for handling forks)
+	blocks         map[string]*Block   // blockHash -> Block
+	blocksByHeight map[uint32][]*Block // height -> []*Block (for handling forks)
 
 	// Chain state
-	longestChain   []*Block               // The longest chain of blocks
-	genesisBlock   *Block                 // The genesis block
-	currentHeight  uint32                 // Height of the longest chain
+	longestChain  []*Block // The longest chain of blocks
+	genesisBlock  *Block   // The genesis block
+	currentHeight uint32   // Height of the longest chain
 
 	// PoI context
-	nodes          []crypto.PublicKey     // Known nodes in the network
-	difficulty     Difficulty             // Current difficulty
+	nodes      []crypto.PublicKey // Known nodes in the network
+	difficulty Difficulty         // Current difficulty
 
 	// Ledger state
-	ledger         *LedgerState           // Current ledger state
+	ledger *LedgerState // Current ledger state
 
 	// For PoI signature tracking
 	messageTracker MessageTracker

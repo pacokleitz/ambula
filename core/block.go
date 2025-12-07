@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	BlockMissingSignature = errors.New("The verified block has no signature.")
-	BlockMissingProof     = errors.New("The verified block has no PoI proof.")
+	ErrBlockMissingSignature = errors.New("the verified block has no signature")
+	ErrBlockMissingProof     = errors.New("the verified block has no PoI proof")
 )
 
 // PROTOCOL_VERSION represents the version of the Block format.
@@ -46,8 +46,8 @@ func (h *Header) Bytes() []byte {
 type Block struct {
 	*Header
 	Transactions []*Transaction
-	Signature    crypto.Signature      // Legacy: simple signature (for testing/backward compatibility)
-	Proof        *ProofOfInteraction   // PoI proof (used in PoI consensus)
+	Signature    crypto.Signature    // Legacy: simple signature (for testing/backward compatibility)
+	Proof        *ProofOfInteraction // PoI proof (used in PoI consensus)
 
 	headerHash crypto.Hash
 }
@@ -124,7 +124,7 @@ func (b *Block) Sign(privKey crypto.PrivateKey) error {
 func (b *Block) VerifyData() error {
 	// Check that block has either signature or proof
 	if b.Signature == nil && b.Proof == nil {
-		return BlockMissingSignature
+		return ErrBlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
@@ -144,7 +144,7 @@ func (b *Block) VerifyData() error {
 	}
 
 	if computedDataHash != b.DataHash {
-		return fmt.Errorf("Block [%s] data hash verification failed.", headerHash.String())
+		return fmt.Errorf("block [%s] data hash verification failed", headerHash.String())
 	}
 
 	return nil
@@ -160,14 +160,14 @@ func (b *Block) Signer() (crypto.PublicKey, error) {
 
 	// Fallback to legacy signature
 	if b.Signature == nil {
-		return nil, BlockMissingSignature
+		return nil, ErrBlockMissingSignature
 	}
 
 	headerHash := b.HeaderHash(BlockHasher{})
 
 	sigPubKey, err := b.Signature.PublicKey(headerHash)
 	if err != nil {
-		return nil, fmt.Errorf("Block [%s] header signature public key recovery failed.", headerHash.String())
+		return nil, fmt.Errorf("block [%s] header signature public key recovery failed", headerHash.String())
 	}
 
 	return sigPubKey, nil
@@ -181,7 +181,7 @@ func (b *Block) SetProof(proof *ProofOfInteraction) {
 // Initiator returns the PublicKey of the PoI initiator (block creator).
 func (b *Block) Initiator() (crypto.PublicKey, error) {
 	if b.Proof == nil {
-		return nil, BlockMissingProof
+		return nil, ErrBlockMissingProof
 	}
 
 	// Recover public key from initial signature
@@ -198,7 +198,7 @@ func (b *Block) Initiator() (crypto.PublicKey, error) {
 // This checks that the proof is valid for the block's content and difficulty.
 func (b *Block) VerifyProof(ctx PoIContext) error {
 	if b.Proof == nil {
-		return BlockMissingProof
+		return ErrBlockMissingProof
 	}
 
 	// Get the initiator public key

@@ -9,7 +9,7 @@ import (
 
 func TestRandomIntNegativ(t *testing.T) {
 	_, err := RandomInt(-5)
-	assert.Equal(t, err, InvalidUpperBound)
+	assert.Equal(t, err, ErrInvalidUpperBound)
 }
 
 func TestRandomIntRandomness(t *testing.T) {

@@ -46,7 +46,7 @@ func AddressFromString(hexAddress string) (Address, error) {
 // AddressFromBytes returns an Address given a HASH_BYTE_SIZE byte slice.
 func AddressFromBytes(b []byte) (Address, error) {
 	if len(b) != ADDR_BYTE_SIZE {
-		return Address{}, fmt.Errorf("Byte slice length %d should match address length %d", len(b), ADDR_BYTE_SIZE)
+		return Address{}, fmt.Errorf("byte slice length %d should match address length %d", len(b), ADDR_BYTE_SIZE)
 	}
 
 	var uints [ADDR_BYTE_SIZE]uint8

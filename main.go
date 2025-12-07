@@ -53,10 +53,10 @@ func runPoIDemo() error {
 	// Create genesis block
 	fmt.Println("Creating genesis block...")
 	genesisHeader := &core.Header{
-		Version:       core.PROTOCOL_VERSION,
-		Height:        0,
-		Timestamp:     time.Now().UnixNano(),
-		Difficulty:    core.Difficulty{Min: core.INITIAL_DIFFICULTY_MIN, Max: core.INITIAL_DIFFICULTY_MAX},
+		Version:    core.PROTOCOL_VERSION,
+		Height:     0,
+		Timestamp:  time.Now().UnixNano(),
+		Difficulty: core.Difficulty{Min: core.INITIAL_DIFFICULTY_MIN, Max: core.INITIAL_DIFFICULTY_MAX},
 	}
 
 	genesisBlock, err := core.NewBlock(genesisHeader, []*core.Transaction{})
